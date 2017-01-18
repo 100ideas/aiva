@@ -7,9 +7,11 @@ ENV DEBIAN_FRONTEND noninteractive
 ADD https://raw.githubusercontent.com/nodesource/distributions/master/deb/setup_6.x /tmp/node6_setup.sh
 
 # Run node installer script to prepare apt-get for later install
+# gonna need wget in bin/setup
 RUN cat /tmp/node6_setup.sh | bash \
     &&  apt-get update \
     && apt-get install -y build-essential \
+    wget \
     dialog \
     git \
     net-tools \
@@ -41,6 +43,9 @@ WORKDIR /var/www/aiva
 COPY package.json ./
 COPY . ./
 RUN sed -i s/peer/trust/ /etc/postgresql/9.5/main/pg_hba.conf && /etc/init.d/postgresql restart
+
+# make sure bin/setup doesn't use `sudo` - it's not included in base img
+#  - https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/
 RUN ["/bin/bash", "-c", "npm i && npm run setup"]
 
 # expose ports for prod/dev, see config/
@@ -56,5 +61,5 @@ EXPOSE 4039 4040 4038 4041 7472 7474 7475 7476 6463 6464 6465 6466
 # post-build: docker commit -m "base ubuntu 16.04 node python" -a "kengz" <id while a container persists> kengz/aiva:v0
 # check: docker images
 # push: docker push kengz/aiva
-# to remove unused images: docker rmi -f $(docker images | grep "^<none>" | awk '{print $3}')
+# to remove unused images: docker rmi -f $(docker images -a | grep "^<none>" | awk '{print $3}')
 # to remove all containers: docker rm `docker ps -aq`

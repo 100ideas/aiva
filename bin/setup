@@ -16,8 +16,8 @@ else
   if [ $(uname) == "Darwin" ]; then
     brew install node
   else
-    curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
-    sudo apt-get install -y nodejs
+    curl -sL https://deb.nodesource.com/setup_6.x | bash -            # don't sudo w/ docker
+    apt-get install -y nodejs                                         # don't sudo w/ docker
   fi
 fi
 
@@ -28,7 +28,8 @@ else
   if [ $(uname) == "Darwin" ]; then
     brew install python3
   else
-    sudo apt-get -y install python3-dev python3-pip python3-setuptools
+    apt-get -y install python3-dev python3-pip python3-setuptools     # don't sudo w/ docker
+    pip install --upgrade pip
   fi
 fi
 
@@ -37,9 +38,9 @@ if which mysql >/dev/null; then
   echo "MySQL is already installed"
 else
   if [ $(uname) == "Darwin" ]; then
-    brew install mysql
+    brew install mysql                                                # don't sudo w/ docker
   else
-    sudo apt-get -y install mysql-server
+    apt-get -y install mysql-server
   fi
 fi
 
@@ -66,7 +67,7 @@ fi
 #     sleep 5
 #     createuser -s postgres
 #   else
-#     sudo apt-get -y install postgresql postgresql-contrib
+#     sudo apt-get -y install postgresql postgresql-contrib           # don't sudo w/ docker
 #   fi
 # fi
 
@@ -90,10 +91,12 @@ else
   if [ $(uname) == "Darwin" ]; then
     brew install neo4j
   else
+    # ensure wget is installed via dockerfile
     wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -
     echo 'deb http://debian.neo4j.org/repo stable/' > /etc/apt/sources.list.d/neo4j.list
-    sudo apt-get update
-    sudo apt-get install neo4j
+    # sudo apt-get update           # docker: bin/setup: line 95: sudo: command not found
+    # sudo apt-get install neo4j    # docker: bin/setup: line 96: sudo: command not found
+    apt-get update && apt-get install -y neo4j
   fi
 fi
 
@@ -111,14 +114,12 @@ else
 fi
 
 # install pip modules
-if python3 -m pip show six autocorrect websocket socketIO-client spacy >/dev/null; then
+if pip3 show six autocorrect websocket socketIO-client spacy >/dev/null; then
   echo "Pip modules already installed"
 else
-  python3 -m pip install -U six
-  python3 -m pip install -U autocorrect
-  python3 -m pip install -U websocket
-  python3 -m pip install -U socketIO-client
-  python3 -m pip install -U spacy
+  # does pip3 cause problems on other systems? seems ok on docker, and simpler
+  #   than `python3 -m pip install -U <modules>`
+  pip3 install -U six autocorrect websocket socketIO-client spacy
 fi
 echo "spaCy model:"
 python3 -m sputnik --name spacy find || python -m spacy.en.download
